@@ -1284,16 +1284,18 @@ class PatchSet(object):
     return True
 
 
-  def dump(self):
+  def dump(self, stream=None):
+    if stream is None:
+      stream = sys.stdout.buffer
     for p in self.items:
       for headline in p.header:
-        print(headline.rstrip('\n'))
-      print('--- ' + p.source)
-      print('+++ ' + p.target)
+        stream.write(headline)
+      stream.write(b'--- ' + p.source + b'\n')
+      stream.write(b'+++ ' + p.target + b'\n')
       for h in p.hunks:
-        print('@@ -%s,%s +%s,%s @@' % (h.startsrc, h.linessrc, h.starttgt, h.linestgt))
+        stream.write(('@@ -%d,%d +%d,%d @@\n' % (h.startsrc, h.linessrc, h.starttgt, h.linestgt)).encode())
         for line in h.text:
-          print(line.rstrip('\n'))
+          stream.write(line)
 
 
 def main():

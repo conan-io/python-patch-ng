@@ -319,6 +319,30 @@ class TestPatchParse(unittest.TestCase):
         self.assertEqual(pto.diffstat(), output, "Output doesn't match")
 
 
+class TestPatchDump(unittest.TestCase):
+    def setUp(self):
+        self.save_cwd = getcwdu()
+        self.tmpdir = mkdtemp(prefix=self.__class__.__name__)
+        os.chdir(self.tmpdir)
+
+    def test_fromstring(self):
+        patch_in = join(TESTS, "07google_code_wiki.patch")
+        patch_out = "patch.out"
+        pst = patch_ng.fromfile(patch_in)
+        import io
+        s = io.BytesIO()
+        pst.dump(s)
+        print(s.getvalue().decode())
+        with open(patch_out, "wb") as f:
+            pst.dump(f)
+        with open(patch_in, "r") as fin:
+            reference = fin.read()
+        with open(patch_out, "r") as fout:
+            dumpout = fout.read()
+        self.assertEqual([l.strip() for l in reference.splitlines()],
+                         [l.strip() for l in dumpout.splitlines()])
+
+
 class TestPatchSetDetection(unittest.TestCase):
     def test_svn_detected(self):
         pto = patch_ng.fromfile(join(TESTS, "01uni_multi/01uni_multi.patch"))

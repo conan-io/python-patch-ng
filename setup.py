@@ -7,7 +7,7 @@ https://github.com/pypa/sampleproject
 # Always prefer setuptools over distutils
 import re
 import os
-from setuptools import setup, find_packages
+from setuptools import setup
 # To use a consistent encoding
 from codecs import open
 
@@ -39,6 +39,7 @@ def load_version():
 
 setup(
     name='patch-ng',
+    python_requires='>=3.6',
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
@@ -72,9 +73,8 @@ setup(
         'Intended Audience :: Developers',
         'Topic :: Software Development :: Build Tools',
         'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.6',
     ],
 
     # What does your project relate to?

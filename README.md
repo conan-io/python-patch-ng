@@ -19,7 +19,7 @@ That's way we forked the original and accepted most of PRs waiting for review si
 
 ### Features
 
- * Python 2 and 3 compatible
+ * Python >=3.6 compatible
  * Automatic correction of
    * Linefeeds according to patched file
    * Diffs broken by stripping trailing whitespace

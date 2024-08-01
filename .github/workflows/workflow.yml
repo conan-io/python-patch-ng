@@ -1,17 +1,56 @@
 name: Main workflow
-on: [push]
+
+on:
+  push:
+    paths-ignore:
+      - 'doc/**'
+      - '**/*.md'
+      - 'LICENSE'
+      - 'example/**'
+      - '.gitignore'
+  workflow_dispatch:
+  pull_request:
+    paths-ignore:
+      - 'doc/**'
+      - '**/*.md'
+      - 'LICENSE'
+      - 'example/**'
+      - '.gitignore'
+
+
 jobs:
-  build:
-    runs-on: ubuntu-16.04
+  linux-validate:
+    name: Validate on Linux - Python ${{ matrix.python }}
+    runs-on: ubuntu-20.04
     strategy:
       matrix:
-        python: [ '2.x', '3.x', 'pypy3' ]
-    name: Python ${{ matrix.python }} Testing
+        python: [ '3.6', '3.8', '3.12' ]
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v4
+
       - name: Setup python
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
           architecture: x64
-      - run: python tests/run_tests.py
+
+      - name: Run tests
+        run: python tests/run_tests.py
+
+  windows-validate:
+    name: Validate on Windows - Python ${{ matrix.python }}
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        python: [ '3.6', '3.8', '3.12' ]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          architecture: x64
+
+      - name: Run tests
+        run: python tests/run_tests.py

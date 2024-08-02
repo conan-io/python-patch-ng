@@ -31,7 +31,7 @@
 from __future__ import print_function
 
 __author__ = "Conan.io <info@conan.io>"
-__version__ = "1.17.4"
+__version__ = "1.18.0"
 __license__ = "MIT"
 __url__ = "https://github.com/conan-io/python-patch"
 

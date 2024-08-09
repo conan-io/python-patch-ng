@@ -42,7 +42,6 @@ import posixpath
 import re
 import shutil
 import stat
-import sys
 import tempfile
 import urllib.request
 from os.path import exists, isfile, abspath

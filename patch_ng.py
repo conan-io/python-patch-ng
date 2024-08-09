@@ -215,12 +215,6 @@ def decode_text(text):
   return text.decode("utf-8", "ignore")  # Ignore not compatible characters
 
 
-def to_file_bytes(content):
-  if not isinstance(content, bytes):
-    content = bytes(content, "utf-8")
-  return content
-
-
 def load(path, binary=False):
   """ Loads a file content """
   with open(path, 'rb') as handle:
@@ -241,7 +235,8 @@ def save(path, content, only_if_modified=False):
   except Exception:
     pass
 
-  new_content = to_file_bytes(content)
+  if isinstance(new_content, str):
+      new_content = new_content.encode()
 
   if only_if_modified and os.path.exists(path):
     old_content = load(path, binary=True)

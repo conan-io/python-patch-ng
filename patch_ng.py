@@ -28,56 +28,24 @@
     ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
 """
-from __future__ import print_function
-
 __author__ = "Conan.io <info@conan.io>"
 __version__ = "1.18.0"
 __license__ = "MIT"
 __url__ = "https://github.com/conan-io/python-patch"
 
-import copy
-import logging
-import re
-import tempfile
 import codecs
-
-# cStringIO doesn't support unicode in 2.5
-try:
-  from StringIO import StringIO
-except ImportError:
-  from io import BytesIO as StringIO # python 3
-try:
-  import urllib2 as urllib_request
-except ImportError:
-  import urllib.request as urllib_request
-
-from os.path import exists, isfile, abspath
+import copy
+import io
+import logging
 import os
 import posixpath
+import re
 import shutil
-import sys
 import stat
-
-
-PY3K = sys.version_info >= (3, 0)
-
-# PEP 3114
-if not PY3K:
-  compat_next = lambda gen: gen.next()
-else:
-  compat_next = lambda gen: gen.__next__()
-
-def tostr(b):
-  """ Python 3 bytes encoder. Used to print filename in
-      diffstat output. Assumes that filenames are in utf-8.
-  """
-  if not PY3K:
-    return b
-
-  # [ ] figure out how to print non-utf-8 filenames without
-  #     information loss
-  return b.decode('utf-8')
-
+import sys
+import tempfile
+import urllib.request
+from os.path import exists, isfile, abspath
 
 #------------------------------------------------
 # Logging is controlled by logger named after the
@@ -90,22 +58,10 @@ info = logger.info
 warning = logger.warning
 error = logger.error
 
-class NullHandler(logging.Handler):
-  """ Copied from Python 2.7 to avoid getting
-      `No handlers could be found for logger "patch"`
-      http://bugs.python.org/issue16539
-  """
-  def handle(self, record):
-    pass
-  def emit(self, record):
-    pass
-  def createLock(self):
-    self.lock = None
-
 streamhandler = logging.StreamHandler()
 
 # initialize logger itself
-logger.addHandler(NullHandler())
+logger.addHandler(logging.NullHandler())
 
 debugmode = False
 
@@ -194,10 +150,9 @@ def fromfile(filename):
   """
   patchset = PatchSet()
   debug("reading %s" % filename)
-  fp = open(filename, "rb")
-  res = patchset.parse(fp)
-  fp.close()
-  if res == True:
+  with open(filename, "rb") as fp:
+      res = patchset.parse(fp)
+  if res is True:
     return patchset
   return False
 
@@ -206,7 +161,7 @@ def fromstring(s):
   """ Parse text string and return PatchSet()
       object (or False if parsing fails)
   """
-  ps = PatchSet( StringIO(s) )
+  ps = PatchSet( io.BytesIO(s) )
   if ps.errors == 0:
     return ps
   return False
@@ -217,7 +172,7 @@ def fromurl(url):
       if an error occured. Note that this also
       can throw urlopen() exceptions.
   """
-  ps = PatchSet( urllib_request.urlopen(url) )
+  ps = PatchSet( urllib.request.urlopen(url) )
   if ps.errors == 0:
     return ps
   return False
@@ -262,11 +217,8 @@ def decode_text(text):
 
 
 def to_file_bytes(content):
-  if PY3K:
-    if not isinstance(content, bytes):
-      content = bytes(content, "utf-8")
-  elif isinstance(content, unicode):
-    content = content.encode("utf-8")
+  if not isinstance(content, bytes):
+    content = bytes(content, "utf-8")
   return content
 
 
@@ -328,8 +280,7 @@ class Patch(object):
     self.type = None
 
   def __iter__(self):
-    for h in self.hunks:
-      yield h
+    return iter(self.hunks)
 
 
 class PatchSet(object):
@@ -359,8 +310,7 @@ class PatchSet(object):
     return len(self.items)
 
   def __iter__(self):
-    for i in self.items:
-      yield i
+    return iter(self.items)
 
   def parse(self, stream):
     """ parse unified diff
@@ -394,7 +344,7 @@ class PatchSet(object):
           return False
 
         try:
-          self._lineno, self._line = compat_next(super(wrapumerate, self))
+          self._lineno, self._line = next(super(wrapumerate, self))
         except StopIteration:
           self._exhausted = True
           self._line = False
@@ -902,7 +852,7 @@ class PatchSet(object):
         #print(iratio, dratio, iwidth, dwidth, histwidth)
         hist = "+"*int(iwidth) + "-"*int(dwidth)
       # -- /calculating +- histogram --
-      output += (format % (tostr(names[i]), str(insert[i] + delete[i]), hist))
+      output += (format % (names[i].decode(), str(insert[i] + delete[i]), hist))
 
     output += (" %d files changed, %d insertions(+), %d deletions(-), %+d bytes"
                % (len(names), sum(insert), sum(delete), delta))
@@ -1270,15 +1220,11 @@ class PatchSet(object):
 
 
   def write_hunks(self, srcname, tgtname, hunks):
-    src = open(srcname, "rb")
-    tgt = open(tgtname, "wb")
+    with open(srcname, "rb") as src, open(tgtname, "wb") as tgt:
+        debug("processing target file %s" % tgtname)
+    
+        tgt.writelines(self.patch_stream(src, hunks))
 
-    debug("processing target file %s" % tgtname)
-
-    tgt.writelines(self.patch_stream(src, hunks))
-
-    tgt.close()
-    src.close()
     # [ ] TODO: add test for permission copy
     shutil.copymode(srcname, tgtname)
     return True

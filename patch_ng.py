@@ -761,8 +761,10 @@ class PatchSet(object):
         if p.header[idx].startswith(b"diff --git"):
           break
       if p.header[idx].startswith(b'diff --git a/'):
+        # git-format-patch with --full-index generates full blob index, which is 40 symbols length
+        # shortcut index length may vary, seems to depend on the project size
         if (idx+1 < len(p.header)
-            and re.match(b'(?:index \\w{7}..\\w{7} \\d{6}|new file mode \\d*)', p.header[idx+1])):
+            and re.match(b'(?:index \\w{7,40}..\\w{7,40} \\d{6}|new file mode \\d*)', p.header[idx+1])):
           if DVCS:
             return GIT
 

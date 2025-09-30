@@ -1,3 +1,32 @@
+[project]
+name = "patch-ng"
+version = "1.19.0"
+requires-python = ">=3.8"
+
+description = "Library to parse and apply unified diffs."
+readme = "README.md"
+license = "MIT"
+authors = [
+    { name = "Conan.io", email = "info@conan.io" }
+]
+
+# See https://pypi.python.org/pypi?%3Aaction=list_classifiers
+classifiers = [
+    'Development Status :: 5 - Production/Stable',
+    'Intended Audience :: Developers',
+    'Topic :: Software Development :: Build Tools',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3.8'
+]
+
+keywords = ['patch', 'parse', 'diff', 'strip', 'diffstat']
+
+[project.urls]
+Repository = "https://github.com/conan-io/python-patch-ng/"
+
 [build-system]
 requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools.package-data]
+patch_ng = ["LICENSE", "README.md"]

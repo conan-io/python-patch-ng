@@ -518,6 +518,47 @@ class TestHelpers(unittest.TestCase):
         self.assertEqual(patch_ng.pathstrip(b'path/name.diff', 1), b'name.diff')
         self.assertEqual(patch_ng.pathstrip(b'path/name.diff', 0), b'path/name.diff')
 
+
+class TestPatchFormat(unittest.TestCase):
+    def setUp(self):
+        self.save_cwd = os.getcwd()
+        self.tmpdir = mkdtemp(prefix=self.__class__.__name__)        
+        shutil.copytree(join(TESTS, 'patchformat'), join(self.tmpdir, 'patchformat'))
+
+    def tearDown(self):
+        os.chdir(self.save_cwd)
+        remove_tree_force(self.tmpdir)
+
+    def test_handle_full_index_patch_format(self):
+        """Test that a full index patch format is handled correctly
+
+        When parsing a git patch with a full index line (40 hex chars),
+        the patch type should be detected as GIT and the patch should be
+        applied correctly (create, update, remove a file).
+        """
+
+        os.chdir(self.tmpdir)
+        pto = patch_ng.fromfile(join(self.tmpdir, 'patchformat', 'create.patch'))
+        self.assertEqual(len(pto), 1)
+        self.assertEqual(pto.items[0].type, patch_ng.GIT)
+        self.assertTrue(pto.apply())
+        self.assertTrue(os.path.exists(join(self.tmpdir, 'quotes.txt')))
+
+        pto = patch_ng.fromfile(join(self.tmpdir, 'patchformat', 'update.patch'))
+        self.assertEqual(len(pto), 1)
+        self.assertEqual(pto.items[0].type, patch_ng.GIT)
+        self.assertTrue(pto.apply())
+        with open(join(self.tmpdir, 'quotes.txt'), 'rb') as f:
+            content = f.read()
+            self.assertEqual(content, b'Si vis pacem cole justitiam.\n')
+
+        pto = patch_ng.fromfile(join(self.tmpdir, 'patchformat', 'remove.patch'))
+        self.assertEqual(len(pto), 1)
+        self.assertEqual(pto.items[0].type, patch_ng.GIT)
+        self.assertTrue(pto.apply())
+        self.assertFalse(os.path.exists(join(self.tmpdir, 'quotes.txt')))
+
+
 def remove_tree_force(folder):
     for root, _, files in os.walk(folder):
         for it in files:

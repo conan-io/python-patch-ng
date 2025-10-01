@@ -494,9 +494,9 @@ class TestPreserveFilePermissions(unittest.TestCase):
         self.tmpdir = mkdtemp(prefix=self.__class__.__name__)
         shutil.copytree(join(TESTS, 'filepermission'), join(self.tmpdir, 'filepermission'))
 
-    #def tearDown(self):
-    #    os.chdir(self.save_cwd)
-    #   remove_tree_force(self.tmpdir)
+    def tearDown(self):
+        os.chdir(self.save_cwd)
+        remove_tree_force(self.tmpdir)
 
     def test_handle_full_index_patch_format(self):
         """Test that when file permission mode is listed in the patch,

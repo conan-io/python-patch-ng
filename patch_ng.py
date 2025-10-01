@@ -707,7 +707,9 @@ class PatchSet(object):
           break
       if p.header[idx].startswith(b'diff --git a/'):
         if (idx+1 < len(p.header)
-            and re.match(b'(?:index \\w{7}..\\w{7} \\d{6}|new file mode \\d*)', p.header[idx+1])):
+            and re.match(
+              b'(?:index \\w{4,40}\\.\\.\\w{4,40}(?: \\d{6})?|new file mode \\d+|deleted file mode \\d+)',
+              p.header[idx+1])):
           if DVCS:
             return GIT
 

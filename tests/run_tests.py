@@ -503,7 +503,6 @@ class TestPreserveFilePermissions(unittest.TestCase):
         the same should be applied to the target file after patching.
         """
 
-        print(f"self.tmpdir: {self.tmpdir}")
         os.chdir(self.tmpdir)
         pto = patch_ng.fromfile(join(self.tmpdir, 'filepermission', 'create755.patch'))
         self.assertEqual(len(pto), 1)
@@ -511,7 +510,8 @@ class TestPreserveFilePermissions(unittest.TestCase):
         self.assertEqual(pto.items[0].filemode, 0o100755)
         self.assertTrue(pto.apply())
         self.assertTrue(os.path.exists(join(self.tmpdir, 'quote.txt')))
-        self.assertEqual(os.stat(join(self.tmpdir, 'quote.txt')).st_mode, 0o755 | stat.S_IFREG)
+        expected_mode = 0o666 if os.name == 'nt' else 0o755
+        self.assertEqual(os.stat(join(self.tmpdir, 'quote.txt')).st_mode, expected_mode | stat.S_IFREG)
 
         pto = patch_ng.fromfile(join(self.tmpdir, 'filepermission', 'update644.patch'))
         self.assertEqual(len(pto), 1)

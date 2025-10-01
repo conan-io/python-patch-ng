@@ -150,9 +150,9 @@ def fromfile(filename):
   patchset = PatchSet()
   debug("reading %s" % filename)
   with open(filename, "rb") as fp:
-      res = patchset.parse(fp)
-  if res is True:
-    return patchset
+    res = patchset.parse(fp)
+    if res == True:
+      return patchset
   return False
 
 
@@ -235,8 +235,9 @@ def save(path, content, only_if_modified=False):
   except Exception:
     pass
 
-  if isinstance(new_content, str):
-      new_content = new_content.encode()
+  new_content = content
+  if not isinstance(content, bytes):
+      new_content = bytes(content, "utf-8")
 
   if only_if_modified and os.path.exists(path):
     old_content = load(path, binary=True)
@@ -846,7 +847,7 @@ class PatchSet(object):
         #print(iratio, dratio, iwidth, dwidth, histwidth)
         hist = "+"*int(iwidth) + "-"*int(dwidth)
       # -- /calculating +- histogram --
-      output += (format % (names[i].decode(), str(insert[i] + delete[i]), hist))
+      output += (format % (names[i].decode('utf-8'), str(insert[i] + delete[i]), hist))
 
     output += (" %d files changed, %d insertions(+), %d deletions(-), %+d bytes"
                % (len(names), sum(insert), sum(delete), delta))

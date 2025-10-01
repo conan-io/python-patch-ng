@@ -21,8 +21,8 @@ from time import sleep
 
 class EVENT_LOOP(unittest.TestCase):
     def t_scheduled(self, interval, iterations, sleep_time=0):
-        print 'Test interval=%s, iterations=%s, sleep=%s' % (interval,
-            iterations, sleep_time)
+        print('Test interval=%s, iterations=%s, sleep=%s' % (interval,
+            iterations, sleep_time))
         warmup_iterations = iterations
 
         self.last_t = 0.
@@ -76,6 +76,6 @@ class EVENT_LOOP(unittest.TestCase):
 
 if __name__ == '__main__':
     if pyglet.version != '1.2dev':
-        print 'Wrong version of pyglet imported; please check your PYTHONPATH'
+        print('Wrong version of pyglet imported; please check your PYTHONPATH')
     else:
         unittest.main()

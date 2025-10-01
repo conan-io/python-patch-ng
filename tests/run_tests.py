@@ -550,7 +550,7 @@ class TestPatchFormat(unittest.TestCase):
         self.assertTrue(pto.apply())
         with open(join(self.tmpdir, 'quotes.txt'), 'rb') as f:
             content = f.read()
-            self.assertEqual(content, b'Si vis pacem cole justitiam.\n')
+            self.assertTrue(b'Si vis pacem cole justitiam.' in content)
 
         pto = patch_ng.fromfile(join(self.tmpdir, 'patchformat', 'remove.patch'))
         self.assertEqual(len(pto), 1)

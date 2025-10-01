@@ -452,6 +452,41 @@ class TestPatchApply(unittest.TestCase):
         self.assertTrue(os.stat(some_file).st_mode, stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
 
 
+class TestHugePatchFile(unittest.TestCase):
+
+    def setUp(self):
+        self.save_cwd = os.getcwd()
+        self.tmpdir = mkdtemp(prefix=self.__class__.__name__)
+        os.chdir(self.tmpdir)
+        self.huge_patchfile = self._create_huge_patchfile(self.tmpdir)
+
+    def _create_huge_patchfile(self, tmpdir):
+        """ Create a patch file with ~30MB of data
+        """
+        hugefile = join(tmpdir, 'hugefile')
+        with open(hugefile, 'wb') as f:
+            for i in range(2500000):
+                f.write(b'Line %d\n' % i)
+        huge_patchfile = join(tmpdir, 'huge.patch')
+        with open(huge_patchfile, 'wb') as f:
+            f.write(b'--- a/hugefile\n')
+            f.write(b'+++ b/hugefile\n')
+            f.write(b'@@ -1,2500000 +1,2500000 @@\n')
+            for i in range(2500000):
+                f.write(b' Line %d\n' % i)
+        return huge_patchfile
+
+    def tearDown(self):
+        os.chdir(self.save_cwd)
+        remove_tree_force(self.tmpdir)
+
+    def test_apply_huge_patch(self):
+        """ Test that a huge patch file can be applied without issues
+        """
+        pto = patch_ng.fromfile(self.huge_patchfile)
+        self.assertTrue(pto.apply(root=self.tmpdir))
+
+
 class TestHelpers(unittest.TestCase):
     # unittest setting
     longMessage = True

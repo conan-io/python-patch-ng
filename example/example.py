@@ -8,7 +8,7 @@ class PatchLogHandler(logging.Handler):
 
     def emit(self, record):
         logstr = self.format(record)
-        print logstr
+        print(logstr)
 
 patchlog = logging.getLogger("patch")
 patchlog.handlers = []

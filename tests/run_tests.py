@@ -36,15 +36,10 @@ import sys
 import re
 import shutil
 import unittest
-import copy
 import stat
 from os import listdir, chmod
 from os.path import abspath, dirname, exists, join, isdir, isfile
 from tempfile import mkdtemp
-try:
-  getcwdu = os.getcwdu
-except AttributeError:
-  getcwdu = os.getcwd  # python 3, where getcwd always returns a unicode object
 
 verbose = False
 if "-v" in sys.argv or "--verbose" in sys.argv:
@@ -150,7 +145,7 @@ class TestPatchFiles(unittest.TestCase):
       # 3.
       # test utility as a whole
       patch_tool = join(dirname(TESTS), "patch_ng.py")
-      save_cwd = getcwdu()
+      save_cwd = os.getcwd()
       os.chdir(tmpdir)
       extra = "-f" if "10fuzzy" in testname else ""
       if verbose:
@@ -204,7 +199,7 @@ add_test_methods(TestPatchFiles)
 
 class TestCheckPatched(unittest.TestCase):
     def setUp(self):
-        self.save_cwd = getcwdu()
+        self.save_cwd = os.getcwd()
         os.chdir(TESTS)
 
     def tearDown(self):
@@ -355,7 +350,7 @@ for filename in os.listdir(TESTDATA):
 
 class TestPatchApply(unittest.TestCase):
     def setUp(self):
-        self.save_cwd = getcwdu()
+        self.save_cwd = os.getcwd()
         self.tmpdir = mkdtemp(prefix=self.__class__.__name__)
         os.chdir(self.tmpdir)
 
@@ -455,6 +450,41 @@ class TestPatchApply(unittest.TestCase):
         chmod(some_file, stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
         self.assertTrue(pto.apply(root=treeroot))
         self.assertTrue(os.stat(some_file).st_mode, stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
+
+
+class TestHugePatchFile(unittest.TestCase):
+
+    def setUp(self):
+        self.save_cwd = os.getcwd()
+        self.tmpdir = mkdtemp(prefix=self.__class__.__name__)
+        os.chdir(self.tmpdir)
+        self.huge_patchfile = self._create_huge_patchfile(self.tmpdir)
+
+    def _create_huge_patchfile(self, tmpdir):
+        """ Create a patch file with ~30MB of data
+        """
+        hugefile = join(tmpdir, 'hugefile')
+        with open(hugefile, 'wb') as f:
+            for i in range(2500000):
+                f.write(b'Line %d\n' % i)
+        huge_patchfile = join(tmpdir, 'huge.patch')
+        with open(huge_patchfile, 'wb') as f:
+            f.write(b'--- a/hugefile\n')
+            f.write(b'+++ b/hugefile\n')
+            f.write(b'@@ -1,2500000 +1,2500000 @@\n')
+            for i in range(2500000):
+                f.write(b' Line %d\n' % i)
+        return huge_patchfile
+
+    def tearDown(self):
+        os.chdir(self.save_cwd)
+        remove_tree_force(self.tmpdir)
+
+    def test_apply_huge_patch(self):
+        """ Test that a huge patch file can be applied without issues
+        """
+        pto = patch_ng.fromfile(self.huge_patchfile)
+        self.assertTrue(pto.apply(root=self.tmpdir))
 
 
 class TestHelpers(unittest.TestCase):

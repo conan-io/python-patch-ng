@@ -1,5 +1,113 @@
-*.pyc
-build
-dist
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+venv/
+.venv/
+*.egg-info/
+.installed.cfg
+*.egg
+pip-wheel-metadata/
+
+# PyInstaller
+#  Usually these files are written by a python script from a template
+#  before PyInstaller builds the exe, so as to inject date/other infos into it.
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*,cover
+.pytest_cache/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+target/
+
+
+# OS generated files #
+######################
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Icon?
+ehthumbs.db
+Thumbs.db
+
+.pydev*
+.project
+
+# IDEs #
+########
+.metadata
 .idea
-patch_ng.egg-info
+.history/
+
+conan.conf
+*default_package_folder
+
+#Eclipse folder
+.settings
+
+#VScode folder
+.vscode
+
+#Generated certificate file
+cacert.pem
+
+#linux backup and vim files
+*~
+.*.sw?
+Session.vim
+
+#Pyinstaller generated binaries
+/pyinstaller
+
+# Run tests in docker in current dir
+.bash_history
+.conan_server/
+.sudo_as_admin_successful
+.noseids
+
+# add excluded
+!conans/client/build
+!conan/tools/build
+!test/unittests/client/build
+!test/unittests/tools/build

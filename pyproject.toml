@@ -5,7 +5,7 @@ requires-python = ">=3.8"
 
 description = "Library to parse and apply unified diffs."
 readme = "README.md"
-license = "MIT"
+license = { text = "MIT" }
 authors = [
     { name = "Conan.io", email = "info@conan.io" }
 ]

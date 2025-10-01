@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python: [ '3.6', '3.8', '3.12' ]
+        python: [ '3.6.15', '3.8.18', '3.12.11' ]
     steps:
       - uses: actions/checkout@v5
 
@@ -42,7 +42,7 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        python: [ '3.6', '3.8', '3.12' ]
+        python: [ '3.6.15', '3.8.18', '3.12.11' ]
     steps:
       - uses: actions/checkout@v5
 

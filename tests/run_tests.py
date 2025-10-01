@@ -508,21 +508,17 @@ class TestPreserveFilePermissions(unittest.TestCase):
         pto = patch_ng.fromfile(join(self.tmpdir, 'filepermission', 'create755.patch'))
         self.assertEqual(len(pto), 1)
         self.assertEqual(pto.items[0].type, patch_ng.GIT)
+        self.assertEqual(pto.items[0].filemode, 0o100755)
         self.assertTrue(pto.apply())
         self.assertTrue(os.path.exists(join(self.tmpdir, 'quote.txt')))
-        expected = stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | \
-                        stat.S_IRGRP | stat.S_IXGRP | \
-                        stat.S_IROTH | stat.S_IXOTH
-        self.assertEqual(os.stat(join(self.tmpdir, 'quote.txt')).st_mode & 0o777, expected)
+        self.assertEqual(os.stat(join(self.tmpdir, 'quote.txt')).st_mode, 0o755 | stat.S_IFREG)
 
         pto = patch_ng.fromfile(join(self.tmpdir, 'filepermission', 'update644.patch'))
         self.assertEqual(len(pto), 1)
         self.assertEqual(pto.items[0].type, patch_ng.GIT)
+        self.assertEqual(pto.items[0].filemode, 0o100644)
         self.assertTrue(pto.apply())
-        expected = stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | \
-                   stat.S_IRGRP | stat.S_IXGRP | \
-                   stat.S_IROTH | stat.S_IXOTH
-        self.assertEqual(os.stat(join(self.tmpdir, 'quote.txt')).st_mode & 0o777, expected)
+        self.assertEqual(os.stat(join(self.tmpdir, 'quote.txt')).st_mode, 0o644 | stat.S_IFREG)
 
 class TestHelpers(unittest.TestCase):
     # unittest setting

@@ -273,6 +273,7 @@ class Patch(object):
     self.header = []
 
     self.type = None
+    self.filemode = None
 
   def __iter__(self):
     return iter(self.hunks)
@@ -290,6 +291,7 @@ class PatchSet(object):
     self.name = None
     # patch set type - one of constants
     self.type = None
+    self.filemode = None
 
     # list of Patch objects
     self.items = []
@@ -660,6 +662,8 @@ class PatchSet(object):
     # ---- detect patch and patchset types ----
     for idx, p in enumerate(self.items):
       self.items[idx].type = self._detect_type(p)
+      if self.items[idx].type == GIT:
+        self.items[idx].filemode = self._detect_file_mode(p)
 
     types = set([p.type for p in self.items])
     if len(types) > 1:
@@ -706,13 +710,48 @@ class PatchSet(object):
         if p.header[idx].startswith(b"diff --git"):
           break
       if p.header[idx].startswith(b'diff --git a/'):
-        if (idx+1 < len(p.header)
-            and re.match(
-              b'(?:index \\w{4,40}\\.\\.\\w{4,40}(?: \\d{6})?|new file mode \\d+|deleted file mode \\d+)',
-              p.header[idx+1])):
-          if DVCS:
-            return GIT
+        git_indicators = []
+        for i in range(idx + 1, len(p.header)):
+          git_indicators.append(p.header[i])
+        for line in git_indicators:
+          if re.match(
+                  b'(?:index \\w{4,40}\\.\\.\\w{4,40}(?: \\d{6})?|new file mode \\d+|deleted file mode \\d+|old mode \\d+|new mode \\d+)',
+                  line):
+            if DVCS:
+              return GIT
 
+              # Additional check: look for mode change patterns
+              # "old mode XXXXX" followed by "new mode XXXXX"
+              has_old_mode = False
+              has_new_mode = False
+
+              for line in git_indicators:
+                if re.match(b'old mode \\d+', line):
+                  has_old_mode = True
+                elif re.match(b'new mode \\d+', line):
+                  has_new_mode = True
+
+              # If we have both old and new mode, it's definitely Git
+              if has_old_mode and has_new_mode and DVCS:
+                return GIT
+
+              # Check for similarity index (Git renames/copies)
+              for line in git_indicators:
+                if re.match(b'similarity index \\d+%', line):
+                  if DVCS:
+                    return GIT
+
+              # Check for rename patterns
+              for line in git_indicators:
+                if re.match(b'rename from .+', line) or re.match(b'rename to .+', line):
+                  if DVCS:
+                    return GIT
+
+              # Check for copy patterns
+              for line in git_indicators:
+                if re.match(b'copy from .+', line) or re.match(b'copy to .+', line):
+                  if DVCS:
+                    return GIT
     # HG check
     #
     #  - for plain HG format header is like "diff -r b2d9961ff1f5 filename"
@@ -735,6 +774,40 @@ class PatchSet(object):
 
     return PLAIN
 
+  def _detect_file_mode(self, p):
+    """ Detect the file mode listed in the patch header
+
+       INFO: Only working with Git-style patches
+    """
+    if len(p.header) > 1:
+      for idx in reversed(range(len(p.header))):
+        if p.header[idx].startswith(b"diff --git"):
+          break
+      if p.header[idx].startswith(b'diff --git a/'):
+        if idx + 1 < len(p.header):
+          # new file (e.g)
+          # diff --git a/quote.txt b/quote.txt
+          # new file mode 100755
+          match = re.match(b'new file mode (\\d+)', p.header[idx + 1])
+          if match:
+            return int(match.group(1), 8)
+          # changed mode (e.g)
+          # diff --git a/quote.txt b/quote.txt
+          # old mode 100755
+          # new mode 100644
+          if idx + 2 < len(p.header):
+            match = re.match(b'new mode (\\d+)', p.header[idx + 2])
+            if match:
+              return int(match.group(1), 8)
+    return None
+
+  def _apply_filemode(self, filepath, filemode):
+    if filemode is not None and stat.S_ISREG(filemode):
+      try:
+        only_file_permissions = filemode & 0o777
+        os.chmod(filepath, only_file_permissions)
+      except Exception as error:
+        warning(f"Could not set filemode {oct(filemode)} for {filepath}: {str(error)}")
 
   def _normalize_filenames(self):
     """ sanitize filenames, normalizing paths, i.e.:
@@ -752,6 +825,7 @@ class PatchSet(object):
     for i,p in enumerate(self.items):
       if debugmode:
         debug("    patch type = %s" % p.type)
+        debug("    filemode = %s" % p.filemode)
         debug("    source = %s" % p.source)
         debug("    target = %s" % p.target)
       if p.type in (HG, GIT):
@@ -928,6 +1002,7 @@ class PatchSet(object):
         hunks = [s.decode("utf-8") for s in item.hunks[0].text]
         new_file = "".join(hunk[1:] for hunk in hunks)
         save(target, new_file)
+        self._apply_filemode(target, item.filemode)
       elif "dev/null" in target:
         source = self.strip_path(source, root, strip)
         safe_unlink(source)
@@ -1059,6 +1134,7 @@ class PatchSet(object):
         else:
           shutil.move(filenamen, backupname)
           if self.write_hunks(backupname if filenameo == filenamen else filenameo, filenamen, p.hunks):
+            self._apply_filemode(filenamen, p.filemode)
             info("successfully patched %d/%d:\t %s" % (i+1, total, filenamen))
             safe_unlink(backupname)
             if new == b'/dev/null':

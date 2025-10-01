@@ -1,0 +1,20 @@
+From 22751ffae72c0b955b55e68ec0e25a80e434e890 Mon Sep 17 00:00:00 2001
+From: John Doe <john.doe@email.com>
+Date: Wed, 1 Oct 2025 10:59:47 +0200
+Subject: [PATCH] Remove quotes.txt
+
+Signed-off-by: John Doe <john.doe@email.com>
+---
+ quotes.txt | 1 -
+ 1 file changed, 1 deletion(-)
+ delete mode 100644 quotes.txt
+
+diff --git a/quotes.txt b/quotes.txt
+deleted file mode 100644
+index 22174d6b96bbdd674d38f8be446d22758f996aba..0000000000000000000000000000000000000000
+--- a/quotes.txt
++++ /dev/null
+@@ -1 +0,0 @@
+-Si vis pacem cole justitiam.
+--
+2.51.0

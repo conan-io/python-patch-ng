@@ -1,0 +1,19 @@
+From 3360e00554544de3a68a227ac9eff5bb687da723 Mon Sep 17 00:00:00 2001
+From: John Doe <john.doe@email.com>
+Date: Wed, 1 Oct 2025 10:59:37 +0200
+Subject: [PATCH] Update quote
+
+Signed-off-by: John Doe <john.doe@email.com>
+---
+ quotes.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/quotes.txt b/quotes.txt
+index edcfcc5846847fffa4986b8437f1d7a3bd8aa8cf..22174d6b96bbdd674d38f8be446d22758f996aba 100644
+--- a/quotes.txt
++++ b/quotes.txt
+@@ -1 +1 @@
+-habita fides ipsam plerumque obligat fidem.
++Si vis pacem cole justitiam.
+--
+2.51.0

@@ -557,6 +557,33 @@ class TestPatchEmptyFile(unittest.TestCase):
         self.assertTrue(pto.apply())
         self.assertEqual(os.stat(join(self.tmpdir, 'quote.txt')).st_mode, 0o644 | stat.S_IFREG)
 
+class TestMoveAndPatch(unittest.TestCase):
+
+    def setUp(self):
+        self.save_cwd = os.getcwd()
+        self.tmpdir = mkdtemp(prefix=self.__class__.__name__)
+        shutil.copytree(join(TESTS, 'movefile'), join(self.tmpdir, 'movefile'))
+
+    def tearDown(self):
+        os.chdir(self.save_cwd)
+        remove_tree_force(self.tmpdir)
+
+    def test_add_move_and_update_file(self):
+        """When a patch file contains a file move (rename) and an update to the file,
+           the patch should be applied correctly.
+
+           Reported by https://github.com/conan-io/python-patch-ng/issues/24
+        """
+
+        os.chdir(self.tmpdir)
+        pto = patch_ng.fromfile(join(self.tmpdir, 'movefile', '0001-quote.patch'))
+        self.assertEqual(len(pto), 2)
+        self.assertEqual(pto.items[0].type, patch_ng.GIT)
+        self.assertEqual(pto.items[1].type, patch_ng.GIT)
+        self.assertTrue(pto.apply())
+        self.assertTrue(os.path.exists(join(self.tmpdir, 'quote', 'quotes.txt')))
+
+
 class TestHelpers(unittest.TestCase):
     # unittest setting
     longMessage = True

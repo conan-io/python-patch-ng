@@ -274,6 +274,7 @@ class Patch(object):
 
     self.type = None
     self.filemode = None
+    self.mode = None
 
   def __iter__(self):
     return iter(self.hunks)
@@ -378,6 +379,7 @@ class PatchSet(object):
     header = []
     srcname = None
     tgtname = None
+    rename = False
 
     # start of main cycle
     # each parsing block already has line available in fe.line
@@ -388,9 +390,12 @@ class PatchSet(object):
       # --           line fetched at the start of this cycle
       if hunkparsed:
         hunkparsed = False
+        rename = False
         if re_hunk_start.match(fe.line):
             hunkhead = True
         elif fe.line.startswith(b"--- "):
+            filenames = True
+        elif fe.line.startswith(b"rename from "):
             filenames = True
         else:
             headscan = True
@@ -398,9 +403,13 @@ class PatchSet(object):
 
       # read out header
       if headscan:
-        while not fe.is_empty and not fe.line.startswith(b"--- "):
-            header.append(fe.line)
-            fe.next()
+        while not fe.is_empty and not fe.line.startswith(b"--- ") and not fe.line.startswith(b"rename from "):
+              header.append(fe.line)
+              fe.next()
+        if not fe.is_empty and fe.line.startswith(b"rename from "):
+          rename = True
+          hunkskip = True
+          hunkbody = False
         if fe.is_empty:
             if p is None:
               debug("no patch data found")  # error is shown later
@@ -495,7 +504,7 @@ class PatchSet(object):
           # switch to hunkhead state
           hunkskip = False
           hunkhead = True
-        elif line.startswith(b"--- "):
+        elif line.startswith(b"--- ") or line.startswith(b"rename from "):
           # switch to filenames state
           hunkskip = False
           filenames = True
@@ -538,6 +547,50 @@ class PatchSet(object):
             # switch back to headscan state
             filenames = False
             headscan = True
+        elif rename:
+          if line.startswith(b"rename from "):
+            re_rename_from = br"^rename from (.+)"
+            match = re.match(re_rename_from, line)
+            if match:
+              srcname = match.group(1).strip()
+            else:
+              warning("skipping invalid rename from at line %d" % (lineno+1))
+              self.errors += 1
+              # XXX p.header += line
+              # switch back to headscan state
+              filenames = False
+              headscan = True
+            if not fe.is_empty:
+              fe.next()
+              line = fe.line
+              lineno = fe.lineno
+              re_rename_to = br"^rename to (.+)"
+              match = re.match(re_rename_to, line)
+              if match:
+                tgtname = match.group(1).strip()
+              else:
+                warning("skipping invalid rename from at line %d" % (lineno + 1))
+                self.errors += 1
+                # XXX p.header += line
+                # switch back to headscan state
+                filenames = False
+                headscan = True
+            if p:  # for the first run p is None
+              self.items.append(p)
+            p = Patch()
+            p.source = srcname
+            srcname = None
+            p.target = tgtname
+            tgtname = None
+            p.header = header
+            header = []
+            # switch to hunkhead state
+            filenames = False
+            hunkhead = False
+            nexthunkno = 0
+            p.hunkends = lineends.copy()
+            hunkparsed = True
+            continue
         elif not line.startswith(b"+++ "):
           if srcname != None:
             warning("skipping invalid patch with no target for %s" % srcname)
@@ -664,6 +717,7 @@ class PatchSet(object):
       self.items[idx].type = self._detect_type(p)
       if self.items[idx].type == GIT:
         self.items[idx].filemode = self._detect_file_mode(p)
+        self.items[idx].mode = self._detect_patch_mode(p)
 
     types = set([p.type for p in self.items])
     if len(types) > 1:
@@ -720,38 +774,26 @@ class PatchSet(object):
             if DVCS:
               return GIT
 
-              # Additional check: look for mode change patterns
-              # "old mode XXXXX" followed by "new mode XXXXX"
-              has_old_mode = False
-              has_new_mode = False
+        # Additional check: look for mode change patterns
+        # "old mode XXXXX" followed by "new mode XXXXX"
+        has_old_mode = False
+        has_new_mode = False
 
-              for line in git_indicators:
-                if re.match(b'old mode \\d+', line):
-                  has_old_mode = True
-                elif re.match(b'new mode \\d+', line):
-                  has_new_mode = True
+        for line in git_indicators:
+          if re.match(b'old mode \\d+', line):
+            has_old_mode = True
+          elif re.match(b'new mode \\d+', line):
+            has_new_mode = True
 
-              # If we have both old and new mode, it's definitely Git
-              if has_old_mode and has_new_mode and DVCS:
-                return GIT
+        # If we have both old and new mode, it's definitely Git
+        if has_old_mode and has_new_mode and DVCS:
+          return GIT
 
-              # Check for similarity index (Git renames/copies)
-              for line in git_indicators:
-                if re.match(b'similarity index \\d+%', line):
-                  if DVCS:
-                    return GIT
+        # Check for similarity index (Git renames/copies)
+        for line in git_indicators:
+          if re.match(b'similarity index \\d+%', line):
+            return GIT
 
-              # Check for rename patterns
-              for line in git_indicators:
-                if re.match(b'rename from .+', line) or re.match(b'rename to .+', line):
-                  if DVCS:
-                    return GIT
-
-              # Check for copy patterns
-              for line in git_indicators:
-                if re.match(b'copy from .+', line) or re.match(b'copy to .+', line):
-                  if DVCS:
-                    return GIT
     # HG check
     #
     #  - for plain HG format header is like "diff -r b2d9961ff1f5 filename"
@@ -808,6 +850,20 @@ class PatchSet(object):
         os.chmod(filepath, only_file_permissions)
       except Exception as error:
         warning(f"Could not set filemode {oct(filemode)} for {filepath}: {str(error)}")
+
+  def _detect_patch_mode(self, p):
+    """Detect patch mode - add, delete, rename, etc.
+    """
+    if len(p.header) > 1:
+      for idx in reversed(range(len(p.header))):
+        if p.header[idx].startswith(b"diff --git"):
+          break
+      change_pattern = re.compile(rb"^diff --git a/([^ ]+) b/(.+)")
+      match = change_pattern.match(p.header[idx])
+      if match:
+        if match.group(1) != match.group(2) and not p.hunks and p.source != b'/dev/null' and p.target != b'/dev/null':
+          return 'rename'
+    return None
 
   def _normalize_filenames(self):
     """ sanitize filenames, normalizing paths, i.e.:
@@ -1006,6 +1062,13 @@ class PatchSet(object):
       elif "dev/null" in target:
         source = self.strip_path(source, root, strip)
         safe_unlink(source)
+      elif item.mode == 'rename':
+        source = self.strip_path(source, root, strip)
+        target = self.strip_path(target, root, strip)
+        if exists(source):
+          os.makedirs(os.path.dirname(target), exist_ok=True)
+          shutil.move(source, target)
+          self._apply_filemode(target, item.filemode)
       else:
         items.append(item)
     self.items = items

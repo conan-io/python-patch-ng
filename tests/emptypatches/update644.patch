@@ -1,0 +1,16 @@
+From 9a6f61c8cabffc01811605577d6d276a07c8bb95 Mon Sep 17 00:00:00 2001
+From: John Doe <john.doe@mail.com>
+Date: Fri, 3 Oct 2025 08:57:43 +0200
+Subject: [PATCH] Change file permission
+
+Signed-off-by: John Doe <john.doe@mail.com>
+---
+ quote.txt | 0
+ 1 file changed, 0 insertions(+), 0 deletions(-)
+ mode change 100755 => 100644 quote.txt
+
+diff --git a/quote.txt b/quote.txt
+old mode 100755
+new mode 100644
+--
+2.51.0

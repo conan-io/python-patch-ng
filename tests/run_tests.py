@@ -577,12 +577,17 @@ class TestMoveAndPatch(unittest.TestCase):
 
         os.chdir(self.tmpdir)
         pto = patch_ng.fromfile(join(self.tmpdir, 'movefile', '0001-quote.patch'))
-        self.assertEqual(len(pto), 2)
+        self.assertEqual(len(pto), 3)
         self.assertEqual(pto.items[0].type, patch_ng.GIT)
         self.assertEqual(pto.items[1].type, patch_ng.GIT)
+        self.assertEqual(pto.items[2].type, patch_ng.GIT)
+        self.assertEqual(pto.items[1].mode, 'rename')
         self.assertTrue(pto.apply())
+        self.assertFalse(os.path.exists(join(self.tmpdir, 'quotes.txt')))
         self.assertTrue(os.path.exists(join(self.tmpdir, 'quote', 'quotes.txt')))
-
+        with open(join(self.tmpdir, 'quote', 'quotes.txt'), 'rb') as f:
+            content = f.read()
+            self.assertTrue(b'dum tempus habemus, operemur bonum' in content)
 
 class TestHelpers(unittest.TestCase):
     # unittest setting

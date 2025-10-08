@@ -29,7 +29,7 @@
     SOFTWARE.
 """
 __author__ = "Conan.io <info@conan.io>"
-__version__ = "1.19.0"
+__version__ = "1.20.0-dev"
 __license__ = "MIT"
 __url__ = "https://github.com/conan-io/python-patch"
 

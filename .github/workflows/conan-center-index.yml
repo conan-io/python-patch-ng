@@ -1,0 +1,45 @@
+name: Validate Applying Patch in Conan Center Index
+
+on:
+  push:
+    paths-ignore:
+      - 'doc/**'
+      - '**/*.md'
+      - 'LICENSE'
+      - 'example/**'
+      - '.gitignore'
+      - 'tests/**'
+  workflow_dispatch:
+  pull_request:
+    paths-ignore:
+      - 'doc/**'
+      - '**/*.md'
+      - 'LICENSE'
+      - 'example/**'
+      - '.gitignore'
+      - 'tests/**'
+
+jobs:
+  conan-center-index-validate:
+    name: "Validate Patche-NG in Conan Center Index"
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Conan client
+        uses: conan-io/setup-conan@v1
+
+      - name: Setup Python NG
+        run: pip install -e .
+
+      - name: Checkout conan-center-index
+        uses: actions/checkout@v5
+        with:
+          repository: conan-io/conan-center-index
+          path: conan-center-index
+          ref: 'd8efbb6f3c51b134205f01d3f8d90bdad1a67fe6'
+
+      - name: Validate Python-NG patch application
+        working-directory: conan-center-index/recipes
+        run: bash .github/scripts/validate-cci-patch-ng.sh

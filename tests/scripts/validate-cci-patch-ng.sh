@@ -5,11 +5,12 @@ set -euo pipefail
 SAMPLE_RECIPES_NUM=10
 
 # Find all conanfile.py files that use apply_conandata_patches
-RECIPES=$(find . -type f -name "conanfile.py" -exec grep "apply_conandata_patches(self)" {} + | sort | uniq | cut -d':' -f1)
+RECIPES=$(find . -type f -name "conanfile.py" -exec grep -l "apply_conandata_patches(self)" {} + | sort | uniq)
+# And does not need system requirement
+RECIPES=$(grep -L "/system" $RECIPES)
 
 echo "Found $(echo "$RECIPES" | wc -l) recipes using apply_conandata_patches."
 
-# Pick 10 random recipes
 SAMPLE_RECIPES=$(shuf -e ${RECIPES[@]} -n $SAMPLE_RECIPES_NUM)
 
 echo "Pick $SAMPLE_RECIPES_NUM random recipes to test:"

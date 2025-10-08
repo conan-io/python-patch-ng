@@ -49,9 +49,9 @@ for it in $SAMPLE_RECIPES; do
         echo "WARNING: conan create failed for $recipe_dir"
         if echo "$output" | grep -q "ERROR: There are invalid packages"; then
             echo "WARNING: Invalid packages found, skipping the build."
-        elfi echo "$output" | grep -q "ERROR: Version conflict"; then
+        elif echo "$output" | grep -q "ERROR: Version conflict"; then
             echo "WARNING: Version conflict, skipping the build."
-        elfi echo "$output" | grep -q "ERROR: Missing binary"; then
+        elif echo "$output" | grep -q "ERROR: Missing binary"; then
             echo "WARNING: Missing binary, skipping the build."
         else
             echo "ERROR: Fatal error during conan create command execution:"
@@ -60,7 +60,9 @@ for it in $SAMPLE_RECIPES; do
             exit 1
         fi
     else
-        echo "INFO: conan create succeeded for $recipe_dir."
+        echo "INFO: Successfully patched $recipe_dir."
+        echo "$output" | tail -n 10
+        echo "-------------------------------------------------------"
         RECIPES_BUILT_COUNT=$((RECIPES_BUILT_COUNT + 1))
     fi
     popd

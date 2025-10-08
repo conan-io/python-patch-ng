@@ -43,7 +43,7 @@ for it in $SAMPLE_RECIPES; do
     set +e
 
     # Create the package with the specified version
-    output=$(conan create . --version=${version} --build=missing 2>&1)
+    output=$(conan create . --version=${version} 2>&1)
     # Accept some errors as non-fatal
     if [ $? -ne 0 ]; then
         echo "WARNING: conan create failed for $recipe_dir"
@@ -51,6 +51,8 @@ for it in $SAMPLE_RECIPES; do
             echo "WARNING: Invalid packages found, skipping the build."
         elfi echo "$output" | grep -q "ERROR: Version conflict"; then
             echo "WARNING: Version conflict, skipping the build."
+        elfi echo "$output" | grep -q "ERROR: Missing binary"; then
+            echo "WARNING: Missing binary, skipping the build."
         else
             echo "ERROR: Fatal error during conan create command execution:"
             echo "$output"

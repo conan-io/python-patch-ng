@@ -26,12 +26,14 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
+        with:
+          path: patch-ng-repo
 
       - name: Setup Conan client
         uses: conan-io/setup-conan@v1
 
       - name: Setup Python NG
-        run: pip install -e .
+        run: pip install -e patch-ng-repo
 
       - name: Checkout conan-center-index
         uses: actions/checkout@v5
@@ -42,4 +44,4 @@ jobs:
 
       - name: Validate Python-NG patch application
         working-directory: conan-center-index/recipes
-        run: bash .github/scripts/validate-cci-patch-ng.sh
+        run: bash scripts-repo/.github/scripts/validate-cci-patch-ng.sh

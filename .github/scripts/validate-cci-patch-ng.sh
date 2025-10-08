@@ -67,12 +67,19 @@ for it in $RECIPES; do
     # Accept some errors as non-fatal
     if [ $? -ne 0 ]; then
         echo "WARNING: conan create failed for $recipe_dir"
-        if echo "$output" | grep -q "ERROR: There are invalid packages"; then
-            echo "WARNING: Invalid packages found, skipping the build."
-        elif echo "$output" | grep -q "ERROR: Version conflict"; then
-            echo "WARNING: Version conflict, skipping the build."
-        elif echo "$output" | grep -q "ERROR: Missing binary"; then
-            echo "WARNING: Missing binary, skipping the build."
+        allowed_errors=(
+            "ERROR: There are invalid packages"
+            "ERROR: Version conflict"
+            "ERROR: Missing binary"
+            "Failed to establish a new connection"
+            "ConanException: sha256 signature failed"
+            "NotFoundException: Not found"
+        )
+        # check if any allowed error is in the output
+        if printf '%s\n' "${allowed_errors[@]}" | grep -q -f - <(echo "$output"); then
+            echo "WARNING: Could not apply patches, skipping build:"
+            echo "$output" | tail -n 10
+            echo "-------------------------------------------------------"
         else
             echo "ERROR: Fatal error during conan create command execution:"
             echo "$output"

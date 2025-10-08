@@ -1,0 +1,6 @@
+diff '--color=auto' -ruN "b/Wrapper/FreeImage.NET/cs/Samples/Sample 01 - Loading and saving/Program.cs" "a/Wrapper/FreeImage.NET/cs/Samples/Sample 01 - Loading and saving/Program.cs"
+--- "b/Wrapper/FreeImage.NET/cs/Samples/Sample 01 - Loading and saving/Program.cs"	2025-10-08 15:56:02.302486070 +0200
++++ "a/Wrapper/FreeImage.NET/cs/Samples/Sample 01 - Loading and saving/Program.cs"	2025-10-08 15:21:46.283174211 +0200
+@@ -1 +1 @@
+-feriunt summos, fulmina montes.
++lux oculorum laetificat animam.

@@ -73,6 +73,9 @@ for it in $RECIPES; do
             "ERROR: Missing binary"
             "Failed to establish a new connection"
             "ConanException: sha256 signature failed"
+            "ConanException: Error downloading file"
+            "ConanException: Cannot find"
+            "certificate verify failed: certificate has expired"
             "NotFoundException: Not found"
         )
         # check if any allowed error is in the output

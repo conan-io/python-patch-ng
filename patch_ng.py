@@ -900,6 +900,9 @@ class PatchSet(object):
       p.source = xnormpath(p.source)
       p.target = xnormpath(p.target)
 
+      p.source = p.source.strip(b'"')
+      p.target = p.target.strip(b'"')
+
       sep = b'/'  # sep value can be hardcoded, but it looks nice this way
 
       # references to parent are not allowed

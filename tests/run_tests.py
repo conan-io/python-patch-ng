@@ -589,6 +589,40 @@ class TestMoveAndPatch(unittest.TestCase):
             content = f.read()
             self.assertTrue(b'dum tempus habemus, operemur bonum' in content)
 
+class TestPatchFileWithSpaces(unittest.TestCase):
+
+    def setUp(self):
+        self.save_cwd = os.getcwd()
+        self.tmpdir = mkdtemp(prefix=self.__class__.__name__)
+        shutil.copytree(join(TESTS, 'filewithspace'), join(self.tmpdir, 'filewithspace'))
+        patch_folder = join(self.tmpdir, "a", "Wrapper", "FreeImage.NET", "cs", "Samples", "Sample 01 - Loading and saving")
+        os.makedirs(patch_folder, exist_ok=True)
+        self.program_cs = join(patch_folder, "Program.cs")
+        with open(self.program_cs, 'w') as fd:
+            fd.write("feriunt summos, fulmina montes.")
+
+    def tearDown(self):
+        os.chdir(self.save_cwd)
+        remove_tree_force(self.tmpdir)
+
+    def test_patch_with_white_space(self):
+        """When a patch file is generated using `diff -ruN b/ a/` command, and
+           contains white spaces in the file path, the patch should be applied correctly.
+
+           Reported by https://github.com/conan-io/conan/issues/16727
+        """
+
+        os.chdir(self.tmpdir)
+        print("TMPDIR:", self.tmpdir)
+        pto = patch_ng.fromfile(join(self.tmpdir, 'filewithspace', '0001-quote.diff'))
+        self.assertEqual(len(pto), 1)
+        self.assertEqual(pto.items[0].type, patch_ng.PLAIN)
+        self.assertTrue(pto.apply())
+        with open(self.program_cs, 'rb') as f:
+            content = f.read()
+            self.assertTrue(b'lux oculorum laetificat animam.' in content)
+
+
 class TestHelpers(unittest.TestCase):
     # unittest setting
     longMessage = True

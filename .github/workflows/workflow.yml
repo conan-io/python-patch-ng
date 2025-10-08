@@ -1,4 +1,4 @@
-name: Main workflow
+name: Python Patch-NG Tests
 
 on:
   push:

@@ -29,7 +29,7 @@
     SOFTWARE.
 """
 __author__ = "Conan.io <info@conan.io>"
-__version__ = "1.19.0-dev"
+__version__ = "1.19.0"
 __license__ = "MIT"
 __url__ = "https://github.com/conan-io/python-patch"
 
@@ -899,6 +899,9 @@ class PatchSet(object):
 
       p.source = xnormpath(p.source)
       p.target = xnormpath(p.target)
+
+      p.source = p.source.strip(b'"')
+      p.target = p.target.strip(b'"')
 
       sep = b'/'  # sep value can be hardcoded, but it looks nice this way
 

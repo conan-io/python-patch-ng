@@ -1,0 +1,48 @@
+name: Validate Conan client
+
+on:
+  push:
+    paths-ignore:
+      - 'doc/**'
+      - '**/*.md'
+      - 'LICENSE'
+      - 'example/**'
+      - '.gitignore'
+      - 'tests/**'
+  workflow_dispatch:
+  pull_request:
+    paths-ignore:
+      - 'doc/**'
+      - '**/*.md'
+      - 'LICENSE'
+      - 'example/**'
+      - '.gitignore'
+      - 'tests/**'
+
+jobs:
+  conan-client-validate:
+    name: "Validate Conan client"
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup python
+        uses: actions/setup-python@v6
+        with:
+          python-version: 3.12
+          architecture: x64
+
+      - name: Clone conan client
+        run: | 
+            git clone --depth 1 https://github.com/conan-io/conan.git
+            cd conan/
+            pip install -r conans/requirements_dev.txt
+            pip install -r conans/requirements.txt
+
+      - name: Run Conan client tests involving patch-ng
+        run: |
+            pip install -e .
+            cd conan/
+            pytest -v test/functional/test_third_party_patch_flow.py
+            pytest -v test/functional/tools/test_files.py
+            pytest -v test/unittests/tools/files/test_patches.py

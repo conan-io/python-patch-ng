@@ -2,7 +2,9 @@
 
 set -euo pipefail
 
-SAMPLE_RECIPES_NUM=10
+SAMPLE_RECIPES_NUM=30
+RECIPES_BUILD_NUM=10
+RECIPES_BUILT_COUNT=0
 
 # Find all conanfile.py files that use apply_conandata_patches
 RECIPES=$(find . -type f -name "conanfile.py" -exec grep -l "apply_conandata_patches(self)" {} + | sort | uniq)
@@ -18,6 +20,12 @@ echo "$SAMPLE_RECIPES"
 
 # Run conan create for each sampled recipe
 for it in $SAMPLE_RECIPES; do
+
+    if [ $RECIPES_BUILT_COUNT -ge $RECIPES_BUILD_NUM ]; then
+        echo "Reached the limit of $RECIPES_BUILD_NUM recipes built, stopping. All done."
+        break
+    fi
+
     recipe_dir=$(dirname "${it}")
     pushd "$recipe_dir"
     echo "Testing recipe in directory: ${recipe_dir}"
@@ -30,7 +38,28 @@ for it in $SAMPLE_RECIPES; do
     version=$(echo ${version} | tr -d '"')
     # Replace apply_conandata_patches to exit just after applying patches
     sed -i -e 's/apply_conandata_patches(self)/apply_conandata_patches(self); import sys; sys.exit(0)/g' conanfile.py
+
+    # Allow conan create to fail without stopping the script, we will handle errors manually
+    set +e
+
     # Create the package with the specified version
-    conan create . --version=${version} --build=missing
+    output=$(conan create . --version=${version} --build=missing 2>&1)
+    # Accept some errors as non-fatal
+    if [ $? -ne 0 ]; then
+        echo "WARNING: conan create failed for $recipe_dir"
+        if echo "$output" | grep -q "ERROR: There are invalid packages"; then
+            echo "WARNING: Invalid packages found, skipping the build."
+        elfi echo "$output" | grep -q "ERROR: Version conflict"; then
+            echo "WARNING: Version conflict, skipping the build."
+        else
+            echo "ERROR: Fatal error during conan create command execution:"
+            echo "$output"
+            popd
+            exit 1
+        fi
+    else
+        echo "INFO: conan create succeeded for $recipe_dir."
+        RECIPES_BUILT_COUNT=$((RECIPES_BUILT_COUNT + 1))
+    fi
     popd
 done

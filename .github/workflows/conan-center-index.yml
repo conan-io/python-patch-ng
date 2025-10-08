@@ -44,4 +44,4 @@ jobs:
 
       - name: Validate Python-NG patch application
         working-directory: conan-center-index/recipes
-        run: bash "${GITHUB_WORKSPACE}/python-ng/tests/scripts/validate-cci-patch-ng.sh"
+        run: bash "${GITHUB_WORKSPACE}/python-ng/.github/scripts/validate-cci-patch-ng.sh"

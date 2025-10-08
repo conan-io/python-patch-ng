@@ -33,13 +33,16 @@ jobs:
           architecture: x64
 
       - name: Clone conan client
-        run: git clone --depth 1 https://github.com/conan-io/conan.git
+        run: | 
+            git clone --depth 1 https://github.com/conan-io/conan.git
+            cd conan/
+            pip install -r conans/requirements_dev.txt
+            pip install -r conans/requirements.txt
 
       - name: Run Conan client tests involving patch-ng
         run: |
+            pip install -e .
             cd conan/
-            pip install -r conans/requirements_dev.txt
             pytest -v test/functional/test_third_party_patch_flow.py
             pytest -v test/functional/tools/test_files.py
             pytest -v test/unittests/tools/files/test_patches.py
-

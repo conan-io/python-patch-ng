@@ -28,10 +28,8 @@
     ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
 """
-__author__ = "Conan.io <info@conan.io>"
-__version__ = "1.20.0-dev"
-__license__ = "MIT"
-__url__ = "https://github.com/conan-io/python-patch"
+from __future__ import print_function
+import importlib.metadata
 
 import codecs
 import copy
@@ -1389,7 +1387,7 @@ def main():
   opt = OptionParser(usage="1. %prog [options] unified.diff\n"
                     "       2. %prog [options] http://host/patch\n"
                     "       3. %prog [options] -- < unified.diff",
-                     version="python-patch %s" % __version__)
+                     version="python-patch %s" % importlib.metadata.version('patch_ng'))
   opt.add_option("-q", "--quiet", action="store_const", dest="verbosity",
                                   const=0, help="print only warnings and errors", default=1)
   opt.add_option("-v", "--verbose", action="store_const", dest="verbosity",

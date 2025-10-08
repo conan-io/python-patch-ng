@@ -19,12 +19,13 @@ on:
 
 
 jobs:
-  linux-validate:
+  validate:
     name: Validate on Linux - Python ${{ matrix.python }}
-    runs-on: ubuntu-22.04
     strategy:
       matrix:
-        python: [ '3.7', '3.8', '3.12' ]
+        python: [ '3.8', '3.12' ]
+        os: [ 'ubuntu-22.04', 'windows-latest' ]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v5
 
@@ -33,24 +34,9 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
           architecture: x64
-
-      - name: Run tests
-        run: python tests/run_tests.py
-
-  windows-validate:
-    name: Validate on Windows - Python ${{ matrix.python }}
-    runs-on: windows-latest
-    strategy:
-      matrix:
-        python: [ '3.7', '3.8', '3.12' ]
-    steps:
-      - uses: actions/checkout@v5
-
-      - name: Setup python
-        uses: actions/setup-python@v6
-        with:
-          python-version: ${{ matrix.python }}
-          architecture: x64
+          
+      - name: Install patch_ng
+        run: pip install .
 
       - name: Run tests
         run: python tests/run_tests.py
